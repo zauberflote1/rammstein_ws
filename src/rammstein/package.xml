@@ -1,0 +1,34 @@
+<package format="2">
+  <name>rammstein</name>
+  <version>0.0.1</version>
+  <description>The Carolus Node Package</description>
+
+  <maintainer email="zauberflote1@github.com">ZAUBERFLOTE1</maintainer>
+  <license>Apache-2.0</license>
+
+  <!-- Build tool dependencies -->
+  <buildtool_depend>catkin</buildtool_depend>
+
+  <!-- Build dependencies -->
+  <build_depend>roscpp</build_depend>
+  <build_depend>sensor_msgs</build_depend>
+  <build_depend>tf2_ros</build_depend>
+  <build_depend>tf2</build_depend>
+  <build_depend>geometry_msgs</build_depend>
+  <build_depend>ff_msgs</build_depend>
+  <build_depend>Eigen3</build_depend>
+
+  <!-- Execution dependencies -->
+  <exec_depend>roscpp</exec_depend>
+  <exec_depend>sensor_msgs</exec_depend>
+  <exec_depend>tf2_ros</exec_depend>
+  <exec_depend>tf2</exec_depend>
+  <exec_depend>geometry_msgs</exec_depend>
+  <exec_depend>ff_msgs</exec_depend>
+  <exec_depend>Eigen3</exec_depend>
+
+  <export>
+    <!-- Export information can be added here if needed -->
+  </export>
+</package>
+

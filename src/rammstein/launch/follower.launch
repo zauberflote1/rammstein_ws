@@ -1,0 +1,10 @@
+<launch>
+    <!-- Launch the Rammstein Follower node -->
+    <node name="rammstein_follower" pkg="rammstein" type="rammstein_follower" output="screen">
+        <!-- Parameters for desired distances -->
+        <param name="desired_distance_x" value="0.15" />
+        <param name="desired_distance_y" value="0.15" />
+        <param name="desired_distance_z" value="0.15" />
+    </node>
+</launch>
+
