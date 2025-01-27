@@ -2,7 +2,7 @@
  * @ Author: zauberflote1
  * @ Create Time: 2025-01-25 13:14:16
  * @ Modified by: zauberflote1
- * @ Modified time: 2025-01-25 20:23:33
+ * @ Modified time: 2025-01-27 01:22:03
  * @ Description: FOLLOWER CODE FOR CAROLUS
  */
 
@@ -136,6 +136,14 @@ private:
         args[1].vec3d[0] = adjustDistance(target_pose.pose.position.x, bot_pose.transform.translation.x, desired_distance_x_);
         args[1].vec3d[1] = adjustDistance(target_pose.pose.position.y, bot_pose.transform.translation.y, desired_distance_y_);
         args[1].vec3d[2] = adjustDistance(target_pose.pose.position.z, bot_pose.transform.translation.z, desired_distance_z_);
+
+            //TOLERANCES NOT USED
+            args[2].data_type = ff_msgs::CommandArg::DATA_TYPE_VEC3d;
+            args[2].vec3d[0] = 0.0;
+            args[2].vec3d[1] = 0.0;
+            args[2].vec3d[2] = 0.0;
+
+
 
         // Orientation remains the same as the bot's current orientation
         args[3].data_type = ff_msgs::CommandArg::DATA_TYPE_MAT33f;
