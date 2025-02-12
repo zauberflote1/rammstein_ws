@@ -2,7 +2,7 @@
  * @ Author: zauberflote1
  * @ Create Time: 2025-01-25 13:14:16
  * @ Modified by: zauberflote1
- * @ Modified time: 2025-01-27 01:22:03
+ * @ Modified time: 2025-02-12 09:05:10
  * @ Description: FOLLOWER CODE FOR CAROLUS
  */
 
@@ -46,13 +46,14 @@ public:
         nh.param("desired_distance_x", desired_distance_x_, 0.15);
         nh.param("desired_distance_y", desired_distance_y_, 0.15);
         nh.param("desired_distance_z", desired_distance_z_, 0.15);
+        nh.param("duration", duration_, 5.0);
 
         // Log loaded parameters
         ROS_INFO("Loaded desired distances: x=%.2f, y=%.2f, z=%.2f",
                  desired_distance_x_, desired_distance_y_, desired_distance_z_);
 
         // Timer for periodic pose processing
-        timer_tf_ = nh.createTimer(ros::Duration(0.2), &CarolusFollower::processClosestPose, this);
+        timer_tf_ = nh.createTimer(ros::Duration(duration_), &CarolusFollower::processClosestPose, this);
 
         // Subscriber for acknowledgments
         sub_ = nh.subscribe("/mgt/ack", 100, &CarolusFollower::AckCallback, this);
@@ -77,6 +78,7 @@ private:
     double desired_distance_x_;
     double desired_distance_y_;
     double desired_distance_z_;
+    double duration_;
 
     void poseCallback(const ff_msgs::VisualLandmarks::ConstPtr& msg) {
         // Update the closest pose (assume the latest message is the closest)
