@@ -2,7 +2,7 @@
  * @ Author: zauberflote1
  * @ Create Time: 2025-01-25 13:14:16
  * @ Modified by: zauberflote1
- * @ Modified time: 2025-02-12 09:05:10
+ * @ Modified time: 2025-02-12 09:11:26
  * @ Description: FOLLOWER CODE FOR CAROLUS
  */
 
@@ -135,10 +135,13 @@ private:
 
         // Calculate deltas for maintaining desired distance
         args[1].data_type = ff_msgs::CommandArg::DATA_TYPE_VEC3d;
-        args[1].vec3d[0] = adjustDistance(target_pose.pose.position.x, bot_pose.transform.translation.x, desired_distance_x_);
-        args[1].vec3d[1] = adjustDistance(target_pose.pose.position.y, bot_pose.transform.translation.y, desired_distance_y_);
-        args[1].vec3d[2] = adjustDistance(target_pose.pose.position.z, bot_pose.transform.translation.z, desired_distance_z_);
-
+        
+        auto posex = adjustDistance(target_pose.pose.position.x, bot_pose.transform.translation.x, desired_distance_x_);
+        auto posey = adjustDistance(target_pose.pose.position.y, bot_pose.transform.translation.y, desired_distance_y_);
+        auto posez = adjustDistance(target_pose.pose.position.z, bot_pose.transform.translation.z, desired_distance_z_);
+        args[1].vec3d[0] = posex;
+        args[1].vec3d[1] = posey;
+        args[1].vec3d[2] = posez;
             //TOLERANCES NOT USED
             args[2].data_type = ff_msgs::CommandArg::DATA_TYPE_VEC3d;
             args[2].vec3d[0] = 0.0;
@@ -161,6 +164,8 @@ private:
         command_in_progress_ = true;
 
         ROS_INFO("Published command with ID: %s", cmd.cmd_id.c_str());
+        ROS_INFO("Target pose: x=%.2f, y=%.2f, z=%.2f",
+                 posex, posey, posez);
     }
 
     double adjustDistance(double target, double current, double threshold) {
