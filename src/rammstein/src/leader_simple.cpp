@@ -2,7 +2,7 @@
  * @ Author: zauberflote1
  * @ Create Time: 2025-01-25 19:35:51
  * @ Modified by: zauberflote1
- * @ Modified time: 2025-01-26 18:25:28
+ * @ Modified time: 2025-02-12 08:52:33
  * @ Description: Leader code for Carolus
  */
 
@@ -33,13 +33,14 @@ public:
         nh.param<std::string>("maneuver_type", maneuver_type_, "square");
         nh.param<std::string>("maneuver_axis", maneuver_axis_, "x");
         nh.param("maneuver_length", maneuver_length_, 0.6);
+        nh.param("duration", duration_, 5.0);
 
         // Log parameters
         ROS_INFO("Loaded maneuver parameters: type=%s, axis=%s, length=%.2f",
                  maneuver_type_.c_str(), maneuver_axis_.c_str(), maneuver_length_);
 
         // Timer to execute maneuver
-        maneuver_timer_ = nh.createTimer(ros::Duration(1.0), &CarolusManeuver::executeManeuver, this);
+        maneuver_timer_ = nh.createTimer(ros::Duration(duration_), &CarolusManeuver::executeManeuver, this);
 
         // Subscriber for acknowledgments
         ack_sub_ = nh.subscribe("/mgt/ack", 100, &CarolusManeuver::AckCallback, this);
@@ -57,10 +58,13 @@ private:
     bool command_in_progress_;
     bool line_executed_;  // Flag to check if the line maneuver has been executed
     std::string unique_cmd_id;
+    double duration_;
 
     std::string maneuver_type_;
     std::string maneuver_axis_;
     double maneuver_length_;
+    Eigen::Vector3d initial_position_;  
+    bool initial_position_set_ = false;
 
     int current_step_ = 0;  // Current step in the maneuver
     const int steps_in_square_ = 4;  // Number of steps in a square
@@ -71,7 +75,7 @@ private:
             return;
         }
 
-        if (maneuver_type_ == "square" && current_step_ >= steps_in_square_) {
+        if (maneuver_type_ == "square" && current_step_ > steps_in_square_) {
             ROS_INFO("Square maneuver completed. Shutting down node.");
             ros::shutdown();
             return;
@@ -154,45 +158,63 @@ private:
         return pose;
     }
 
-    geometry_msgs::Pose calculateSquareTarget(const geometry_msgs::TransformStamped& curr_pose) {
-        geometry_msgs::Pose pose;
+geometry_msgs::Pose calculateSquareTarget(const geometry_msgs::TransformStamped& curr_pose) {
+    geometry_msgs::Pose pose;
 
-        // Retain current orientation
-        tf2::Quaternion tf_quat(
-            curr_pose.transform.rotation.x,
-            curr_pose.transform.rotation.y,
-            curr_pose.transform.rotation.z,
-            curr_pose.transform.rotation.w);
+    // Retain initial orientation
+    tf2::Quaternion tf_quat(
+        curr_pose.transform.rotation.x,
+        curr_pose.transform.rotation.y,
+        curr_pose.transform.rotation.z,
+        curr_pose.transform.rotation.w);
 
-        pose.orientation.x = tf_quat.x();
-        pose.orientation.y = tf_quat.y();
-        pose.orientation.z = tf_quat.z();
-        pose.orientation.w = tf_quat.w();
+    pose.orientation.x = tf_quat.x();
+    pose.orientation.y = tf_quat.y();
+    pose.orientation.z = tf_quat.z();
+    pose.orientation.w = tf_quat.w();
 
-        // Define square steps relative to the current position
-        switch (current_step_ % steps_in_square_) {
-            case 0:
-                pose.position.x = curr_pose.transform.translation.x + maneuver_length_;  // Forward
-                pose.position.y = curr_pose.transform.translation.y;
-                break;
-            case 1:
-                pose.position.y = curr_pose.transform.translation.y + maneuver_length_;  // Right
-                pose.position.x = curr_pose.transform.translation.x;
-                break;
-            case 2:
-                pose.position.x = curr_pose.transform.translation.x - maneuver_length_;  // Backward
-                pose.position.y = curr_pose.transform.translation.y;
-                break;
-            case 3:
-                pose.position.y = curr_pose.transform.translation.y - maneuver_length_;  // Left
-                pose.position.x = curr_pose.transform.translation.x;
-                break;
-        }
-
-        pose.position.z = curr_pose.transform.translation.z;  // Keep z constant
-        current_step_++;
-        return pose;
+    // Store initial position only once and always use it for calculations
+    if (!initial_position_set_) {
+        initial_position_ = Eigen::Vector3d(curr_pose.transform.translation.x, 
+                                            curr_pose.transform.translation.y, 
+                                            curr_pose.transform.translation.z);
+        initial_position_set_ = true;
     }
+
+    Eigen::Vector3d new_position = initial_position_;  // Always reference the initial position
+
+    // Execute exactly four moves in a square, relative to initial_position_
+    switch (current_step_) {
+        case 0:
+            new_position.x() += maneuver_length_;  // Move forward
+            break;
+        case 1:
+            new_position.x() += maneuver_length_;  // Move right
+            new_position.y() -= maneuver_length_;  // Move right
+            break;
+        case 2:
+            new_position.y() -= maneuver_length_; // Move backward
+            break;
+        case 3:
+            ROS_INFO("Returning to initial position.");
+            break;
+    }
+
+    pose.position.x = new_position.x();
+    pose.position.y = new_position.y();
+    pose.position.z = initial_position_.z();  // Keep z constant (do not modify)
+
+    current_step_++;
+
+    // if (current_step_ >= steps_in_square_) {
+    //     ROS_INFO("Square maneuver completed. Shutting down node.");
+    //     ros::shutdown();
+    // }
+
+    return pose;
+}
+
+
 
     void buildCommand(const geometry_msgs::PoseStamped& target_pose, const geometry_msgs::TransformStamped& bot_pose) {
         if (command_in_progress_) {
@@ -234,6 +256,7 @@ private:
         command_in_progress_ = true;
 
         ROS_INFO("Published maneuver command with ID: %s", cmd.cmd_id.c_str());
+        ROS_INFO("Target position: %.2f, %.2f, %.2f", target_pose.pose.position.x, target_pose.pose.position.y, target_pose.pose.position.z);
     }
 
     void AckCallback(const ff_msgs::AckStamped::ConstPtr& ack) {

@@ -9,6 +9,7 @@ endif()
 # Find dependencies
 find_package(catkin REQUIRED COMPONENTS
   roscpp
+  rosbag
   sensor_msgs
   geometry_msgs
   ff_msgs
@@ -33,14 +34,19 @@ set(FOLLOWER_SOURCE
   src/follower_simple.cpp
 )
 
+set(BAG_SOURCE
+  src/bag_converter.cpp
+)
+
 catkin_package(
-  CATKIN_DEPENDS roscpp sensor_msgs 
+  CATKIN_DEPENDS roscpp sensor_msgs rosbag
   DEPENDS Eigen3
 )
 
 # Executables
 add_executable(rammstein_leader ${LEADER_SOURCE})
 add_executable(rammstein_follower ${FOLLOWER_SOURCE})
+add_executable(bags ${BAG_SOURCE})
 
 # Link libraries for leader
 target_link_libraries(rammstein_leader
@@ -53,9 +59,14 @@ target_link_libraries(rammstein_follower
   ${catkin_LIBRARIES}
   ${EIGEN3_LIBRARIES}
 )
+target_link_libraries(bags
+  ${catkin_LIBRARIES}
+  ${EIGEN3_LIBRARIES}
+)
+
 
 # Install
-install(TARGETS rammstein_leader rammstein_follower
+install(TARGETS rammstein_leader rammstein_follower bags
   RUNTIME DESTINATION ${CATKIN_PACKAGE_SHARE_DESTINATION}
   ##FOR RUBEN
   #  RUNTIME DESTINATION ${CATKIN_PACKAGE_SHARE_DESTINATION}

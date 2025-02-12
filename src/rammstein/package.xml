@@ -15,11 +15,13 @@
   <build_depend>tf2_ros</build_depend>
   <build_depend>tf2</build_depend>
   <build_depend>geometry_msgs</build_depend>
+  <build_depend>rosbag</build_depend>
   <build_depend>ff_msgs</build_depend>
   <build_depend>Eigen3</build_depend>
 
   <!-- Execution dependencies -->
   <exec_depend>roscpp</exec_depend>
+    <exec_depend>rosbag</exec_depend>
   <exec_depend>sensor_msgs</exec_depend>
   <exec_depend>tf2_ros</exec_depend>
   <exec_depend>tf2</exec_depend>

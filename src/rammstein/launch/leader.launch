@@ -3,8 +3,9 @@
     <node name="rammstein_leader" pkg="rammstein" type="rammstein_leader" output="screen">
         <!-- Parameters for maneuver settings -->
         <param name="maneuver_type" value="square" />
-        <param name="maneuver_axis" value="x" />
-        <param name="maneuver_length" value="0.6" />
+        <param name="maneuver_axis" value="y" />
+        <param name="maneuver_length" value="0.5" />
+        <param name='duration' value='5' />
     </node>
 </launch>
 
