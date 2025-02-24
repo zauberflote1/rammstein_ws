@@ -7,6 +7,7 @@
 #include <ff_msgs/VisualLandmark.h>
 #include <boost/filesystem.hpp>
 #include <fstream>
+#include <iomanip>  // Include for precision control
 
 void writeEkfStateToCSV(const std::string &filename, const std::vector<ff_msgs::EkfState> &ekf_data) {
     std::ofstream file(filename);
@@ -49,11 +50,13 @@ void writePoseStampedToCSV(const std::string &filename, const std::vector<geomet
 
 void writeVisualLandmarksToCSV(const std::string &filename, const std::vector<ff_msgs::VisualLandmarks> &landmark_data) {
     std::ofstream file(filename);
-    file << "timestamp,camera_id,pose_x,pose_y,pose_z,pose_qx,pose_qy,pose_qz,pose_qw,runtime,landmark_x,landmark_y,landmark_z,landmark_u,landmark_v" << std::endl;
+    file << std::fixed << std::setprecision(9);  // Force high precision
+    file << "timestamp, runtime, camera_id,pose_x,pose_y,pose_z,pose_qx,pose_qy,pose_qz,pose_qw,runtime,landmark_x,landmark_y,landmark_z,landmark_u,landmark_v" << std::endl;
     
     for (const auto &msg : landmark_data)  {
         for (const auto &landmark : msg.landmarks) {
-            file << msg.header.stamp.toSec() << ","
+            file << msg.header.stamp << ","
+                 << msg.runtime << ","
                  << msg.camera_id << ","
                  << msg.pose.position.x << "," << msg.pose.position.y << "," << msg.pose.position.z << ","
                  << msg.pose.orientation.x << "," << msg.pose.orientation.y << "," << msg.pose.orientation.z << "," << msg.pose.orientation.w << ","

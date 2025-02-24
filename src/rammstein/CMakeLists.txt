@@ -34,6 +34,11 @@ set(FOLLOWER_SOURCE
   src/follower_simple.cpp
 )
 
+set(FOLLOWER_CAROLUS_SOURCE
+  src/follower_carolus.cpp
+)
+
+
 set(BAG_SOURCE
   src/bag_converter.cpp
 )
@@ -46,10 +51,16 @@ catkin_package(
 # Executables
 add_executable(rammstein_leader ${LEADER_SOURCE})
 add_executable(rammstein_follower ${FOLLOWER_SOURCE})
+add_executable(rammstein_follower_carolus ${FOLLOWER_CAROLUS_SOURCE})
 add_executable(bags ${BAG_SOURCE})
 
 # Link libraries for leader
 target_link_libraries(rammstein_leader
+  ${catkin_LIBRARIES}
+  ${EIGEN3_LIBRARIES}
+)
+
+target_link_libraries(rammstein_follower_carolus
   ${catkin_LIBRARIES}
   ${EIGEN3_LIBRARIES}
 )
