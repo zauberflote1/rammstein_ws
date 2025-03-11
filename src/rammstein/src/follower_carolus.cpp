@@ -2,7 +2,7 @@
  * @ Author: zauberflote1
  * @ Create Time: 2025-01-25 13:14:16
  * @ Modified by: zauberflote1
- * @ Modified time: 2025-02-23 23:39:10
+ * @ Modified time: 2025-03-11 13:25:39
  * @ Description: FOLLOWER CODE FOR CAROLUS
  */
 
@@ -70,43 +70,119 @@ private:
     ros::Subscriber sub_;
     ros::Subscriber pose_sub_;
     ros::Publisher cmd_pub_;
-    geometry_msgs::PoseStamped closest_pose_;  // Directly updated in `poseCallback`
+    geometry_msgs::PoseStamped new_initial_pose;  // Directly updated in `poseCallback`
     bool command_in_progress_;
     std::string unique_cmd_id;
-
+    std::deque<geometry_msgs::PoseStamped> pose_buffer_;
     // Distance thresholds loaded from ROS parameters
     double desired_distance_x_;
     double desired_distance_y_;
     double desired_distance_z_;
     double duration_;
 
-    void poseCallback(const ff_msgs::VisualLandmarks::ConstPtr& msg) {
-        // Update the closest pose (assume the latest message is the closest)
-        closest_pose_.header = msg->header;
-        closest_pose_.pose = msg->pose;
+    geometry_msgs::PoseStamped rotatePoseToCameraFrame(const geometry_msgs::PoseStamped& closest_pose_beacon) {
+    geometry_msgs::PoseStamped camera_pose;
+    camera_pose.header = closest_pose_beacon.header;
+    camera_pose.header.frame_id = "camera_frame";
 
-        ROS_INFO("Pose received from VisualLandmarks callback.");
+    // Extract original position from beacon pose
+    Eigen::Vector3d beacon_position(
+        closest_pose_beacon.pose.position.x,
+        closest_pose_beacon.pose.position.y,
+        closest_pose_beacon.pose.position.z
+    );
+
+    // Extract Euler angles (RzRyRx) from quaternion given by P4P algorithm
+    Eigen::Quaterniond q_beacon(
+        closest_pose_beacon.pose.orientation.w,
+        closest_pose_beacon.pose.orientation.x,
+        closest_pose_beacon.pose.orientation.y,
+        closest_pose_beacon.pose.orientation.z
+    );
+
+    // Create rotation matrix from quaternion (beacon orientation)
+    Eigen::Matrix3d R_beacon = q_beacon.toRotationMatrix();
+
+    // Axis mapping matrix (from beacon/body to camera frame)
+    Eigen::Matrix3d R_axis_map;
+    R_axis_map <<  0,  0, -1,
+                   1,  0,  0,
+                   0, -1,  0;
+
+    // Apply correct axis mapping rotation (Beacon → Camera)
+    Eigen::Matrix3d R_camera = R_axis_map * R_beacon;
+
+    // Rotate beacon position into camera frame
+    Eigen::Vector3d position_camera = R_axis_map * beacon_position;
+
+    // Set rotated position into the output message
+    camera_pose.pose.position.x = position_camera.x();
+    camera_pose.pose.position.y = position_camera.y();
+    camera_pose.pose.position.z = position_camera.z();
+
+    // Convert final rotation matrix into quaternion for camera_pose
+    Eigen::Quaterniond q_camera(R_camera);
+    q_camera.normalize();
+
+    camera_pose.pose.orientation.w = q_camera.w();
+    camera_pose.pose.orientation.x = q_camera.x();
+    camera_pose.pose.orientation.y = q_camera.y();
+    camera_pose.pose.orientation.z = q_camera.z();
+
+    return camera_pose;
+}
+
+    void poseCallback(const ff_msgs::VisualLandmarks::ConstPtr& msg) {
+        geometry_msgs::PoseStamped new_pose_;
+        new_pose_.header = msg->header;
+        new_pose_.pose = msg->pose;
+        pose_buffer_.push_back(new_pose_);
+
+        // ROS_INFO("Pose received from VisualLandmarks callback.");
     }
 
     void processClosestPose(const ros::TimerEvent&) {
         if (command_in_progress_) {
-            ROS_INFO("Command in progress, skipping pose processing.");
+            // ROS_INFO("Command in progress, skipping pose processing.");
             return;
         }
 
         try {
+            if (pose_buffer_.empty()) {
+                ROS_WARN("No poses received yet.");
+                return;
+            }
             // // Get transform from world to dock/body
             // auto local_transform = tf_buffer_.lookupTransform("world", "dock/body", ros::Time(0));
 
             // // Transform the closest pose into the world frame
             // geometry_msgs::PoseStamped transformed_pose;
             // tf2::doTransform(closest_pose_, transformed_pose, local_transform);
+            auto closest_pose_ = rotatePoseToCameraFrame(pose_buffer_.back());
 
+            auto initial_pose = rotatePoseToCameraFrame(pose_buffer_.front());
+
+            
+            if (std::abs(closest_pose_.pose.position.x - initial_pose.pose.position.x) < 0.01 &&
+                std::abs(closest_pose_.pose.position.y - initial_pose.pose.position.y) < 0.01) {
+                ROS_INFO("No movement detected.");
+                return;
+            }
+
+            geometry_msgs::PoseStamped delta;
+            delta.pose.position.x = closest_pose_.pose.position.x - initial_pose.pose.position.x;
+            delta.pose.position.y = closest_pose_.pose.position.y - initial_pose.pose.position.y;
+            delta.pose.position.z = closest_pose_.pose.position.z - initial_pose.pose.position.z;
+            new_initial_pose = pose_buffer_.back();
             // Get the current robot pose
             auto curr_pose = tf_buffer_.lookupTransform("world", "body", ros::Time(0));
 
+            pose_buffer_.clear();
+            pose_buffer_.push_back(new_initial_pose);
+
             // Build and send the movement command
-            buildCommand(closest_pose_, curr_pose);
+            buildCommand(delta, curr_pose);
+
 
         } catch (const tf2::TransformException& ex) {
             ROS_WARN_STREAM("Transform lookup failed: " << ex.what());
@@ -136,11 +212,11 @@ private:
         // Calculate deltas for maintaining desired distance
         args[1].data_type = ff_msgs::CommandArg::DATA_TYPE_VEC3d;
         
-        auto posex = adjustDistance(-target_pose.pose.position.z, bot_pose.transform.translation.x, desired_distance_x_);
-        auto posey = adjustDistance(-target_pose.pose.position.x, bot_pose.transform.translation.y, desired_distance_y_);
+        auto posex = adjustDistance(target_pose.pose.position.x, bot_pose.transform.translation.x, desired_distance_x_);
+        auto posey = adjustDistance(target_pose.pose.position.y, bot_pose.transform.translation.y, desired_distance_y_);
         // auto posez = adjustDistance(target_pose.pose.position.z, bot_pose.transform.translation.z, desired_distance_z_);
-        args[1].vec3d[0] = bot_pose.transform.translation.x -target_pose.pose.position.z - desired_distance_x_;
-        args[1].vec3d[1] = bot_pose.transform.translation.y -target_pose.pose.position.x;
+        args[1].vec3d[0] = bot_pose.transform.translation.x +target_pose.pose.position.x;
+        args[1].vec3d[1] = bot_pose.transform.translation.y +target_pose.pose.position.y;
         args[1].vec3d[2] = bot_pose.transform.translation.z;
             //TOLERANCES NOT USED
             args[2].data_type = ff_msgs::CommandArg::DATA_TYPE_VEC3d;
@@ -189,6 +265,7 @@ private:
             }
         }
     }
+
 };
 
 int main(int argc, char** argv) {

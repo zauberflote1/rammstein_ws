@@ -77,7 +77,7 @@ target_link_libraries(bags
 
 
 # Install
-install(TARGETS rammstein_leader rammstein_follower bags
+install(TARGETS rammstein_leader rammstein_follower bags rammstein_follower_carolus
   RUNTIME DESTINATION ${CATKIN_PACKAGE_SHARE_DESTINATION}
   ##FOR RUBEN
   #  RUNTIME DESTINATION ${CATKIN_PACKAGE_SHARE_DESTINATION}

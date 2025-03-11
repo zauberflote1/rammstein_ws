@@ -5,7 +5,7 @@
         <param name="desired_distance_x" value="0.15" />
         <param name="desired_distance_y" value="0.15" />
         <param name="desired_distance_z" value="0.15" />
-        <param name="duration" value="5" />
+        <param name="duration" value="0.5" />
     </node>
 </launch>
 
