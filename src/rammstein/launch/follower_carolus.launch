@@ -1,11 +1,15 @@
 <launch>
-    <!-- Launch the Rammstein Follower node -->
+    <arg name="desired_distance_x" default="0.3" />
+    <arg name="desired_distance_y" default="0.15" />
+    <arg name="desired_distance_z" default="0.15" />
+    <arg name="use_offset_x" default="true" />
+    <arg name="duration" default="0.5" />
+
     <node name="rammstein_follower_carolus" pkg="rammstein" type="rammstein_follower_carolus" output="screen">
-        <!-- Parameters for desired distances -->
-        <param name="desired_distance_x" value="0.15" />
-        <param name="desired_distance_y" value="0.15" />
-        <param name="desired_distance_z" value="0.15" />
-        <param name="duration" value="0.5" />
+        <param name="desired_distance_x" value="$(arg desired_distance_x)" />
+        <param name="desired_distance_y" value="$(arg desired_distance_y)" />
+        <param name="desired_distance_z" value="$(arg desired_distance_z)" />
+        <param name="use_offset_x" value="$(arg use_offset_x)" />
+        <param name="duration" value="$(arg duration)" />
     </node>
 </launch>
-
