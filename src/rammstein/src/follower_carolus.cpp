@@ -46,7 +46,8 @@ public:
         nh.param("desired_distance_x", desired_distance_x_, 0.15);
         nh.param("desired_distance_y", desired_distance_y_, 0.15);
         nh.param("desired_distance_z", desired_distance_z_, 0.15);
-        nh.param("duration", duration_, 5.0);
+        nh.param("duration", duration_, 1.0);
+        nh.param("use_offset_x", use_offset_x, true);
 
         // Log loaded parameters
         ROS_INFO("Loaded desired distances: x=%.2f, y=%.2f, z=%.2f",
@@ -77,6 +78,7 @@ private:
     // Distance thresholds loaded from ROS parameters
     double desired_distance_x_;
     double desired_distance_y_;
+    bool use_offset_x;
     double desired_distance_z_;
     double duration_;
 
@@ -212,10 +214,16 @@ private:
         // Calculate deltas for maintaining desired distance
         args[1].data_type = ff_msgs::CommandArg::DATA_TYPE_VEC3d;
         
-        auto posex = adjustDistance(target_pose.pose.position.x, bot_pose.transform.translation.x, desired_distance_x_);
-        auto posey = adjustDistance(target_pose.pose.position.y, bot_pose.transform.translation.y, desired_distance_y_);
-        // auto posez = adjustDistance(target_pose.pose.position.z, bot_pose.transform.translation.z, desired_distance_z_);
-        args[1].vec3d[0] = bot_pose.transform.translation.x +target_pose.pose.position.x;
+        
+        double offset_x = (target_pose.pose.position.x >= 0) ? desired_distance_x_ : -desired_distance_x_;
+        double target_x;
+        if (use_offset_x) {
+            target_x = bot_pose.transform.translation.x + target_pose.pose.position.x - offset_x;
+        } else {
+            target_x = bot_pose.transform.translation.x + target_pose.pose.position.x;
+        }
+
+        args[1].vec3d[0] = target_x;
         args[1].vec3d[1] = bot_pose.transform.translation.y +target_pose.pose.position.y;
         args[1].vec3d[2] = bot_pose.transform.translation.z;
             //TOLERANCES NOT USED
