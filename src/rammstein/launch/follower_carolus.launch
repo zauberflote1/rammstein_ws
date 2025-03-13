@@ -4,6 +4,9 @@
     <arg name="desired_distance_z" default="0.15" />
     <arg name="use_offset_x" default="true" />
     <arg name="duration" default="0.5" />
+    <arg name="delta_x_min" default="0.05" />
+    <arg name="delta_y_min" default="0.05" />
+    <arg name="delta_z_min" default="0.05" />
 
     <node name="rammstein_follower_carolus" pkg="rammstein" type="rammstein_follower_carolus" output="screen">
         <param name="desired_distance_x" value="$(arg desired_distance_x)" />
@@ -11,5 +14,8 @@
         <param name="desired_distance_z" value="$(arg desired_distance_z)" />
         <param name="use_offset_x" value="$(arg use_offset_x)" />
         <param name="duration" value="$(arg duration)" />
+        <param name="delta_x_min" value="$(arg delta_x_min)" />
+        <param name="delta_y_min" value="$(arg delta_y_min)" />
+        <param name="delta_z_min" value="$(arg delta_z_min)" />
     </node>
 </launch>

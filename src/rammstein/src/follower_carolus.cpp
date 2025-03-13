@@ -2,7 +2,7 @@
  * @ Author: zauberflote1
  * @ Create Time: 2025-01-25 13:14:16
  * @ Modified by: zauberflote1
- * @ Modified time: 2025-03-11 13:25:39
+ * @ Modified time: 2025-03-12 20:46:05
  * @ Description: FOLLOWER CODE FOR CAROLUS
  */
 
@@ -43,11 +43,14 @@ public:
         ros::NodeHandle nh("~");  // Use private namespace for parameters
 
         // Load desired distances from parameters
-        nh.param("desired_distance_x", desired_distance_x_, 0.15);
+        nh.param("desired_distance_x", desired_distance_x_, 0.3);
         nh.param("desired_distance_y", desired_distance_y_, 0.15);
         nh.param("desired_distance_z", desired_distance_z_, 0.15);
         nh.param("duration", duration_, 1.0);
         nh.param("use_offset_x", use_offset_x, true);
+        nh.param("delta_x_min", delta_x_min, 0.05);
+        nh.param("delta_y_min", delta_y_min, 0.05);
+        nh.param("delta_z_min", delta_z_min, 0.05);
 
         // Log loaded parameters
         ROS_INFO("Loaded desired distances: x=%.2f, y=%.2f, z=%.2f",
@@ -80,10 +83,17 @@ private:
     double desired_distance_y_;
     bool use_offset_x;
     double desired_distance_z_;
+    double delta_x_min;
+    double delta_y_min;
+    double delta_z_min;
     double duration_;
+    bool initi_tf = false;
+    geometry_msgs::TransformStamped curr_pose;
+    
 
     geometry_msgs::PoseStamped rotatePoseToCameraFrame(const geometry_msgs::PoseStamped& closest_pose_beacon) {
     geometry_msgs::PoseStamped camera_pose;
+    
     camera_pose.header = closest_pose_beacon.header;
     camera_pose.header.frame_id = "camera_frame";
 
@@ -165,8 +175,8 @@ private:
             auto initial_pose = rotatePoseToCameraFrame(pose_buffer_.front());
 
             
-            if (std::abs(closest_pose_.pose.position.x - initial_pose.pose.position.x) < 0.01 &&
-                std::abs(closest_pose_.pose.position.y - initial_pose.pose.position.y) < 0.01) {
+            if (std::abs(closest_pose_.pose.position.x - initial_pose.pose.position.x) < delta_x_min ||
+                std::abs(closest_pose_.pose.position.y - initial_pose.pose.position.y) < delta_y_min) {
                 ROS_INFO("No movement detected.");
                 return;
             }
@@ -177,7 +187,11 @@ private:
             delta.pose.position.z = closest_pose_.pose.position.z - initial_pose.pose.position.z;
             new_initial_pose = pose_buffer_.back();
             // Get the current robot pose
-            auto curr_pose = tf_buffer_.lookupTransform("world", "body", ros::Time(0));
+            if (!initi_tf) {
+                curr_pose = tf_buffer_.lookupTransform("world", "body", ros::Time(0));
+                initi_tf = true;
+            }
+           
 
             pose_buffer_.clear();
             pose_buffer_.push_back(new_initial_pose);
@@ -222,6 +236,9 @@ private:
         } else {
             target_x = bot_pose.transform.translation.x + target_pose.pose.position.x;
         }
+        curr_pose.transform.translation.x = target_x;
+        curr_pose.transform.translation.y = bot_pose.transform.translation.y + target_pose.pose.position.y;
+        curr_pose.transform.translation.z = bot_pose.transform.translation.z;
 
         args[1].vec3d[0] = target_x;
         args[1].vec3d[1] = bot_pose.transform.translation.y +target_pose.pose.position.y;
