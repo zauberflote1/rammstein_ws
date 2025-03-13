@@ -2,7 +2,7 @@
  * @ Author: zauberflote1
  * @ Create Time: 2025-01-25 13:14:16
  * @ Modified by: zauberflote1
- * @ Modified time: 2025-03-12 20:53:02
+ * @ Modified time: 2025-03-12 21:02:07
  * @ Description: FOLLOWER CODE FOR CAROLUS
  */
 
@@ -196,13 +196,13 @@ private:
                 curr_pose = tf_buffer_.lookupTransform("world", "body", ros::Time(0));
                 initi_tf = true;
             }
-           
+           auto curr_pose_tf = tf_buffer_.lookupTransform("world", "body", ros::Time(0));
 
             pose_buffer_.clear();
             pose_buffer_.push_back(new_initial_pose);
 
             // Build and send the movement command
-            buildCommand(delta, curr_pose);
+            buildCommand(delta, curr_pose, curr_pose_tf);
 
 
         } catch (const tf2::TransformException& ex) {
@@ -210,7 +210,7 @@ private:
         }
     }
 
-    void buildCommand(const geometry_msgs::PoseStamped& target_pose, const geometry_msgs::TransformStamped& bot_pose) {
+    void buildCommand(const geometry_msgs::PoseStamped& target_pose, const geometry_msgs::TransformStamped& bot_pose, const geometry_msgs::TransformStamped& curr_pose_tf) {
         if (command_in_progress_) {
             return;
         }
@@ -258,10 +258,10 @@ private:
 
         // Orientation remains the same as the bot's current orientation
         args[3].data_type = ff_msgs::CommandArg::DATA_TYPE_MAT33f;
-        args[3].mat33f[0] = bot_pose.transform.rotation.x;
-        args[3].mat33f[1] = bot_pose.transform.rotation.y;
-        args[3].mat33f[2] = bot_pose.transform.rotation.z;
-        args[3].mat33f[3] = bot_pose.transform.rotation.w;
+        args[3].mat33f[0] = curr_pose_tf.transform.rotation.x;
+        args[3].mat33f[1] = curr_pose_tf.transform.rotation.y;
+        args[3].mat33f[2] = curr_pose_tf.transform.rotation.z;
+        args[3].mat33f[3] = curr_pose_tf.transform.rotation.w;
 
         cmd.args = args;
 
