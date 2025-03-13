@@ -2,7 +2,7 @@
  * @ Author: zauberflote1
  * @ Create Time: 2025-01-25 13:14:16
  * @ Modified by: zauberflote1
- * @ Modified time: 2025-03-12 20:46:05
+ * @ Modified time: 2025-03-12 20:53:02
  * @ Description: FOLLOWER CODE FOR CAROLUS
  */
 
@@ -55,13 +55,18 @@ public:
         // Log loaded parameters
         ROS_INFO("Loaded desired distances: x=%.2f, y=%.2f, z=%.2f",
                  desired_distance_x_, desired_distance_y_, desired_distance_z_);
+        ROS_INFO("Loaded duration: %.2f", duration_);
+        ROS_INFO("Loaded use_offset_x: %s", use_offset_x ? "true" : "false");
+        ROS_INFO("Loaded delta minimum: x=%.2f, y=%.2f, z=%.2f", delta_x_min, delta_y_min, delta_z_min);
+ 
+
 
         // Timer for periodic pose processing
         timer_tf_ = nh.createTimer(ros::Duration(duration_), &CarolusFollower::processClosestPose, this);
 
         // Subscriber for acknowledgments
         sub_ = nh.subscribe("/mgt/ack", 100, &CarolusFollower::AckCallback, this);
-        pose_sub_ = nh.subscribe("/loc/ar/features", 100, &CarolusFollower::poseCallback, this);
+        pose_sub_ = nh.subscribe("/pose", 100, &CarolusFollower::poseCallback, this);
 
         // Command publisher
         cmd_pub_ = nh.advertise<ff_msgs::CommandStamped>("/command", 10);
