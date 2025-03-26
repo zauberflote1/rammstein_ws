@@ -2,7 +2,7 @@
  * @ Author: zauberflote1
  * @ Create Time: 2025-01-25 13:14:16
  * @ Modified by: zauberflote1
- * @ Modified time: 2025-03-12 21:02:07
+ * @ Modified time: 2025-03-26 10:53:10
  * @ Description: FOLLOWER CODE FOR CAROLUS
  */
 
@@ -165,7 +165,7 @@ private:
         }
 
         try {
-            if (pose_buffer_.empty()) {
+            if (pose_buffer_.empty() || pose_buffer_.size() < 10) {
                 ROS_WARN("No poses received yet.");
                 return;
             }
@@ -179,17 +179,33 @@ private:
 
             auto initial_pose = rotatePoseToCameraFrame(pose_buffer_.front());
 
+            geometry_msgs::PoseStamped delta;
+
+            if (std::abs(closest_pose_.pose.position.x - initial_pose.pose.position.x) < delta_x_min){
+                delta.pose.position.x = 0;
+            }
+            if (std::abs(closest_pose_.pose.position.y - initial_pose.pose.position.y) < delta_y_min){
+                delta.pose.position.y = 0;
+            }
+            if (std::abs(closest_pose_.pose.position.z - initial_pose.pose.position.z) < delta_z_min){
+                delta.pose.position.z = 0;
+            }
+            if (std::abs(closest_pose_.pose.position.x - initial_pose.pose.position.x) > delta_x_min){
+                delta.pose.position.x = closest_pose_.pose.position.x - initial_pose.pose.position.x;
+            }
+            if (std::abs(closest_pose_.pose.position.y - initial_pose.pose.position.y) > delta_y_min){
+                delta.pose.position.y = closest_pose_.pose.position.y - initial_pose.pose.position.y;
+            }
+            if (std::abs(closest_pose_.pose.position.z - initial_pose.pose.position.z) > delta_z_min){
+                delta.pose.position.z = closest_pose_.pose.position.z - initial_pose.pose.position.z;
+            }
             
-            if (std::abs(closest_pose_.pose.position.x - initial_pose.pose.position.x) < delta_x_min ||
-                std::abs(closest_pose_.pose.position.y - initial_pose.pose.position.y) < delta_y_min) {
-                ROS_INFO("No movement detected.");
+            if (delta.pose.position.x == 0 && delta.pose.position.y == 0 && delta.pose.position.z == 0) {
+                ROS_INFO("No movement detected. Skipping command.");
                 return;
             }
 
-            geometry_msgs::PoseStamped delta;
-            delta.pose.position.x = closest_pose_.pose.position.x - initial_pose.pose.position.x;
-            delta.pose.position.y = closest_pose_.pose.position.y - initial_pose.pose.position.y;
-            delta.pose.position.z = closest_pose_.pose.position.z - initial_pose.pose.position.z;
+
             new_initial_pose = pose_buffer_.back();
             // Get the current robot pose
             if (!initi_tf) {

@@ -1,12 +1,12 @@
 <launch>
-    <arg name="desired_distance_x" default="0.0" />
+    <arg name="desired_distance_x" default="0.2" />
     <arg name="desired_distance_y" default="0.15" />
     <arg name="desired_distance_z" default="0.15" />
-    <arg name="use_offset_x" default="false" />
+    <arg name="use_offset_x" default="true" />
     <arg name="duration" default="0.1" />
-    <arg name="delta_x_min" default="0.0" />
-    <arg name="delta_y_min" default="0.0" />
-    <arg name="delta_z_min" default="0.0" />
+    <arg name="delta_x_min" default="0.05" />
+    <arg name="delta_y_min" default="0.05" />
+    <arg name="delta_z_min" default="0.05" />
 
     <node name="rammstein_follower_carolus" pkg="rammstein" type="rammstein_follower_carolus" output="screen">
         <param name="desired_distance_x" value="$(arg desired_distance_x)" />
