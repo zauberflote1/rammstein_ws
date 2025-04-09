@@ -2,7 +2,7 @@
  * @ Author: zauberflote1
  * @ Create Time: 2025-01-25 13:14:16
  * @ Modified by: zauberflote1
- * @ Modified time: 2025-03-26 10:53:10
+ * @ Modified time: 2025-04-09 11:59:52
  * @ Description: FOLLOWER CODE FOR CAROLUS
  */
 
@@ -51,6 +51,7 @@ public:
         nh.param("delta_x_min", delta_x_min, 0.05);
         nh.param("delta_y_min", delta_y_min, 0.05);
         nh.param("delta_z_min", delta_z_min, 0.05);
+        nh.param("upside_down", upside_down, false);
 
         // Log loaded parameters
         ROS_INFO("Loaded desired distances: x=%.2f, y=%.2f, z=%.2f",
@@ -93,6 +94,7 @@ private:
     double delta_z_min;
     double duration_;
     bool initi_tf = false;
+    bool upside_down = false;
     geometry_msgs::TransformStamped curr_pose;
     
 
@@ -264,6 +266,13 @@ private:
         args[1].vec3d[0] = target_x;
         args[1].vec3d[1] = bot_pose.transform.translation.y +target_pose.pose.position.y;
         args[1].vec3d[2] = bot_pose.transform.translation.z;
+        if (upside_down) {//test
+                auto target_xupside = bot_pose.transform.translation.x - target_pose.pose.position.x;
+                auto target_yupside = bot_pose.transform.translation.y - target_pose.pose.position.y;
+                args[1].vec3d[0] = target_xupside;
+                args[1].vec3d[1] = target_yupside;
+            }
+
             //TOLERANCES NOT USED
             args[2].data_type = ff_msgs::CommandArg::DATA_TYPE_VEC3d;
             args[2].vec3d[0] = 0.0;

@@ -7,6 +7,7 @@
     <arg name="delta_x_min" default="0.0" />
     <arg name="delta_y_min" default="0.0" />
     <arg name="delta_z_min" default="0.0" />
+    <arg name="upside_down" default="false" />
 
     <node name="rammstein_follower_carolus" pkg="rammstein" type="rammstein_follower_carolus" output="screen">
         <param name="desired_distance_x" value="$(arg desired_distance_x)" />
@@ -17,5 +18,6 @@
         <param name="delta_x_min" value="$(arg delta_x_min)" />
         <param name="delta_y_min" value="$(arg delta_y_min)" />
         <param name="delta_z_min" value="$(arg delta_z_min)" />
+        <param name="upside_down" value="$(arg upside_down)" />
     </node>
 </launch>
